@@ -52,18 +52,26 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
+            # Login to ECR from EC2
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            cd infra-repo
-            docker compose pull
-            docker compose up -d
+            # Pull the latest image
+            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+            # Go to your Docker Compose folder
+            cd ~/test-app || exit
+
+            # Restart containers
+            docker-compose pull
+            docker-compose up -d
+
 
 

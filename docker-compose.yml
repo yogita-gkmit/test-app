@@ -1,0 +1,9 @@
+version: '3.9'
+
+services:
+  backend:
+    image: 022232268930.dkr.ecr.ap-south-1.amazonaws.com/test-backend:latest
+    container_name: test-backend
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
