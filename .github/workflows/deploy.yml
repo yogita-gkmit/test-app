@@ -59,19 +59,20 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script: |
-            # Login to ECR from EC2
+          # Login to ECR
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            # Pull the latest image
-            docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+            # Clone or update repo
+            cd ~
+            if [ -d test-app ]; then
+                cd test-app
+                git pull
+            else
+                git clone https://github.com/yogita-gkmit/test-app.git
+                cd test-app
+            fi
 
-            # Go to your Docker Compose folder
-            cd ~/test-app || exit
-
-            # Restart containers
+            # Deploy with Docker Compose
             docker-compose pull
-            docker-compose up -d
-
-
-
+            docker-compose up -d --build
