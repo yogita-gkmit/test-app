@@ -32,8 +32,7 @@ jobs:
 
       - name: Tag Docker image
         run: |
-          docker tag test-backend:latest \
-          ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+          docker tag test-backend:latest ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
       - name: Push Docker image
         run: |
