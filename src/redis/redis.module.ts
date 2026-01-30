@@ -11,6 +11,7 @@ import { RedisService } from './redis.service';
         return new Redis({
           host: process.env.REDIS_HOST,
           port: Number(process.env.REDIS_PORT ?? 6379),
+          tls: {},
         });
       },
     },

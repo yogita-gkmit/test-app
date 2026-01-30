@@ -76,13 +76,3 @@ jobs:
             # Deploy with Docker Compose
             docker-compose pull
             docker-compose up -d --build
-        env:
-          PORT: 3000
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          REDIS_HOST: ${{ secrets.REDIS_HOST }}
-          REDIS_PORT: ${{ secrets.REDIS_PORT }}
-          CACHE_TTL: ${{ secrets.CACHE_TTL }}
