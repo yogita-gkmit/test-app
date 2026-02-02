@@ -8,10 +8,11 @@ import { RedisService } from './redis.service';
     {
       provide: 'REDIS_CLIENT',
       useFactory: () => {
+        const isAws = process.env.IS_AWS === 'true';
         return new Redis({
           host: process.env.REDIS_HOST,
           port: Number(process.env.REDIS_PORT ?? 6379),
-          tls: {},
+          ...(isAws ? { tls: {} } : {}),
         });
       },
     },
