@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { Item } from './items.entity';
 import { RedisService } from '../redis/redis.service';
 import { RedisHelper } from '../redis/redis.helper';
@@ -59,19 +59,27 @@ export class ItemsService {
   }
 
   async createItem(data: Partial<Item>): Promise<Item> {
-    const item = this.itemsRepository.create(data);
-    const savedItem = await this.itemsRepository.save(item);
+    try {
+      const item = this.itemsRepository.create(data);
+      const savedItem = await this.itemsRepository.save(item);
 
-    // invalidate list cache
-    await this.redisService.deleteKey('items:all');
+      await this.redisService.deleteKey('items:all');
 
-    return savedItem;
+      return savedItem;
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        (error as any).code === '23505'
+      ) {
+        throw new ConflictException('Item with this name already exists');
+      }
+      throw error;
+    }
   }
-
-    async updateItem(
+  async updateItem(
     id: string,
     data: Partial<Item>,
-    ): Promise<Item> {
+  ): Promise<Item> {
     const item = await this.itemsRepository.findOne({ where: { id } });
 
     if (!item) {
@@ -91,12 +99,11 @@ export class ItemsService {
     Object.assign(item, data);
     const updatedItem = await this.itemsRepository.save(item);
 
-    // invalidate caches
     await this.redisService.deleteKey('items:all');
     await this.redisService.deleteKey(this.redisHelper.itemsRequest(id));
 
     return updatedItem;
-    }
+  }
 
 
   async deleteItem(id: string): Promise<{ message: string }> {
