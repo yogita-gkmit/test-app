@@ -30,6 +30,13 @@ export class ItemsService {
       60,
     );
 
+    console.log(">>>>>>>>>>Redis items stored : ",items);
+    console.log(">>>>>>>>>>Set KEY",  await this.redisService.setKey(
+      cacheKey,
+      JSON.stringify(items),
+      60,
+    ));
+    
     return items;
   }
 
