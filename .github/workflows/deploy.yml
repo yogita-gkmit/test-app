@@ -63,16 +63,20 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
             | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            # Clone or update repo
-            cd ~
-            if [ -d test-app ]; then
-                cd test-app
-                git pull
-            else
-                git clone https://github.com/yogita-gkmit/test-app.git
-                cd test-app
-            fi
+            # # Clone or update repo
+            # cd ~
+            # if [ -d test-app ]; then
+            #     cd test-app
+            #     git pull
+            # else
+            #     git clone https://github.com/yogita-gkmit/test-app.git
+            #     cd test-app
+            # fi
+
+        run: docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+
+        run: docker run -d -p 3000:3000 --name test-backend ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
             # Deploy with Docker Compose
-            docker-compose pull
-            docker-compose up -d --build
+            # docker-compose pull
+            # docker-compose up -d --build
