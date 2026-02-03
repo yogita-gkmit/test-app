@@ -11,9 +11,10 @@ import { RedisService } from './redis.service';
       useFactory: () => {
         const isAws = process.env.IS_AWS === 'true';
         if (isAws) {
-          return new Cluster([
-            { host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT) },
-          ]);
+          return new Cluster(
+            [{ host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT ?? 6379) }],
+            { redisOptions: { tls: {} } },
+          );
         } else {
           return new Redis({
             host: process.env.REDIS_HOST ?? '127.0.0.1',
