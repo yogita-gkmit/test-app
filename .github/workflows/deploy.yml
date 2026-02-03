@@ -64,25 +64,13 @@ jobs:
             | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
             echo "Stopping old container (if exists)"
-            if [ $(docker ps -a -q -f name=test-backend) ]; then
-              docker stop test-backend
-              docker rm test-backend
-            fi
+            docker stop test-backend || true
+            docker rm test-backend || true
 
             echo "Pulling latest image"
             docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
 
-            echo "Running new container"
-            docker run -d \
-              -p 3000:3000 \
-              --name test-backend \
-              --env-file /home/ec2-user/load-env.sh \
-              ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
-            
-            sleep 5
+            echo "Running load-env.sh to fetch secrets and start container"
+            chmod +x /home/ec2-user/load-env.sh
+            /home/ec2-user/load-env.sh
 
-            echo "Cleaning up unused Docker resources"
-            docker image prune -f
-            docker container prune -f
-            docker volume prune -f
-            docker network prune -f
