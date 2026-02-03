@@ -74,6 +74,7 @@ jobs:
             docker run -d \
               -p 3000:3000 \
               --name test-backend \
+              --env-file /home/ec2-user/load-env.sh \
               ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
             
             echo "Cleaning up unused Docker resources"
