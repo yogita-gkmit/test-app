@@ -14,7 +14,7 @@ export class ItemsService {
     private readonly redisHelper: RedisHelper,
   ) {}
 
-  async getItems(): Promise<Item[]> {
+  async getItems() {
     const cacheKey = 'items:all';
 
     const cached = await this.redisService.getKey(cacheKey);
@@ -24,14 +24,11 @@ export class ItemsService {
 
     const items = await this.itemsRepository.find();
 
-    const result = await this.redisService.setKey(
+    this.redisService.setKey(
       cacheKey,
       JSON.stringify(items),
       60,
     );
-
-    console.log(">>>>>>>>>>Redis items stored : ", items);
-    console.log(">>>>>>>>>>Set KEY : ", result);
 
     return items;
   }
@@ -39,9 +36,13 @@ export class ItemsService {
   async getItemById(id: string): Promise<Item> {
     const cacheKey = this.redisHelper.itemsRequest(id);
 
-    const cached = await this.redisService.getKey(cacheKey);
-    if (cached) {
-      return JSON.parse(cached);
+    try {
+      const cached = await this.redisService.getKey(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (err: any) {
+      console.error('Redis getItemById failed:', err.message);
     }
 
     const item = await this.itemsRepository.findOne({ where: { id } });
@@ -49,11 +50,9 @@ export class ItemsService {
       throw new NotFoundException('Item not found');
     }
 
-    await this.redisService.setKey(
-      cacheKey,
-      JSON.stringify(item),
-      60,
-    );
+    this.redisService
+      .setKey(cacheKey, JSON.stringify(item), 60)
+      .catch(err => console.error('Redis setItemById failed:', err.message));
 
     return item;
   }
@@ -63,7 +62,9 @@ export class ItemsService {
       const item = this.itemsRepository.create(data);
       const savedItem = await this.itemsRepository.save(item);
 
-      await this.redisService.deleteKey('items:all');
+      this.redisService
+        .deleteKey('items:all')
+        .catch(err => console.error('Redis delete items failed:', err.message));
 
       return savedItem;
     } catch (error) {
@@ -76,6 +77,7 @@ export class ItemsService {
       throw error;
     }
   }
+
   async updateItem(
     id: string,
     data: Partial<Item>,
@@ -99,8 +101,15 @@ export class ItemsService {
     Object.assign(item, data);
     const updatedItem = await this.itemsRepository.save(item);
 
-    await this.redisService.deleteKey('items:all');
-    await this.redisService.deleteKey(this.redisHelper.itemsRequest(id));
+    // invalidate caches (non-blocking)
+    this.redisService
+      .deleteKey('items:all')
+      .catch(err => console.error('Redis delete items failed:', err.message));
+
+    this.redisService
+      .deleteKey(this.redisHelper.itemsRequest(id))
+      .catch(err => console.error('Redis delete item failed:', err.message));
+
 
     return updatedItem;
   }
@@ -115,9 +124,14 @@ export class ItemsService {
 
     await this.itemsRepository.softDelete(id);
 
-    // invalidate caches
-    await this.redisService.deleteKey('items:all'); // because if dont delete it all then also the deleted item will be cached
-    await this.redisService.deleteKey(this.redisHelper.itemsRequest(id));
+    // invalidate caches (non-blocking)
+    this.redisService
+      .deleteKey('items:all')
+      .catch(err => console.error('Redis delete items failed:', err.message));
+
+    this.redisService
+      .deleteKey(this.redisHelper.itemsRequest(id))
+      .catch(err => console.error('Redis delete item failed:', err.message));
 
     return { message: 'Item deleted successfully' };
   }
