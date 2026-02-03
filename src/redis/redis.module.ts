@@ -12,8 +12,7 @@ import { RedisService } from './redis.service';
         const isAws = process.env.IS_AWS === 'true';
         if (isAws) {
           return new Cluster([
-            { host: 'test-backend-redis-0001-001.test-backend-redis.wn13ev.aps1.cache.amazonaws.com', port: 6379 },
-            { host: 'test-backend-redis-0001-002.test-backend-redis.wn13ev.aps1.cache.amazonaws.com', port: 6379 },
+            { host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT) },
           ]);
         } else {
           return new Redis({
