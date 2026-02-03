@@ -75,3 +75,9 @@ jobs:
               -p 3000:3000 \
               --name test-backend \
               ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest
+            
+            echo "Cleaning up unused Docker resources"
+            docker image prune -af
+            docker container prune -f
+            docker volume prune -f
+            docker network prune -f
